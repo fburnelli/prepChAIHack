@@ -52,7 +52,7 @@ def generate_vector_store(data_folder="data"):
 
 
 def query(collection):
-    query_text = "Ware die Daten anonimisiert?"
+    query_text = "Does Swiss law require an employer to give multiple warnings before firing an employee for just cause?"
     query_embedding = model.encode([query_text])
 
     results = collection.query(
@@ -61,16 +61,16 @@ def query(collection):
     include=["documents", "metadatas", "distances"]
     )
 
-    print(f"\n🔍 Risultati per la query: \"{query_text}\"\n")
+    print(f"\n🔍 Query results: \"{query_text}\"\n")
 
     for i in range(len(results["documents"][0])):
         doc = results["documents"][0][i]
         doc_id = results["metadatas"][0][i]
         distance = results["distances"][0][i]
     
-        print(f"📄 Documento {i+1} (ID: {doc_id})")
-        print(f"🔢 Similarità: {1 - distance:.2f}")
-        print(f"📝 Testo:\n{doc[:200]}...\n")  
+        print(f"📄 Document {i+1} (ID: {doc_id})")
+        print(f"🔢 Similarity: {1 - distance:.2f}")
+        print(f"📝 text:\n{doc[:500]}...\n")  
 
 if __name__ == "__main__":
     collection=generate_vector_store()
