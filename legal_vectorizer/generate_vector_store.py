@@ -20,29 +20,32 @@ def chunk_text(text, chunk_size=500):
     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
 def generate_vector_store(data_folder="data"):
-
+    # Initialize persistent ChromaDB client and collection
     client = chromadb.PersistentClient(path="./chroma_db", settings=Settings())
     collection = client.get_or_create_collection(name="pdf_vectors")
-    
-    
-    
-    # Loop through all PDFs in the folder
-    for filename in os.listdir(data_folder):
-        if filename.lower().endswith(".pdf"):
-            pdf_path = os.path.join(data_folder, filename)
-            print(f"📄 Processing: {filename}")
 
-            # Extract and chunk text
-            text = extract_text_from_pdf(pdf_path)
-            chunks = chunk_text(text)
+    # Recursively traverse all subfolders
+    for root, dirs, files in os.walk(data_folder):
+        for filename in files:
+            if filename.lower().endswith(".pdf"):
+                pdf_path = os.path.join(root, filename)
+                print(f"📄 Processing: {pdf_path}")
 
-            # Generate embeddings
-            embeddings = model.encode(chunks, show_progress_bar=True)
+                # Extract and chunk text
+                text = extract_text_from_pdf(pdf_path)
+                chunks = chunk_text(text)
 
-            # Add to ChromaDB
-            for i, chunk in enumerate(chunks):
-                doc_id = f"{filename}_{i}"
-                collection.add(documents=[chunk], embeddings=[embeddings[i].tolist()], ids=[doc_id])
+                # Generate embeddings for all chunks at once
+                embeddings = model.encode(chunks, show_progress_bar=True)
+
+                # Add each chunk + its embedding to ChromaDB
+                for i, chunk in enumerate(chunks):
+                    doc_id = f"{os.path.relpath(pdf_path, data_folder)}_{i}"
+                    collection.add(
+                        documents=[chunk],
+                        embeddings=[embeddings[i].tolist()],
+                        ids=[doc_id]
+                    )
 
     return collection
         
